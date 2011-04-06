@@ -94,6 +94,8 @@
 			.drag('dragstart', function (ev, dd) {
 				log('[dragstart]', 2);
 
+				offsetTop = sortableObject.offset().top;
+
 				//requires handle
 				if (!$(ev.target).is(config.handle)) {
 					return false;
@@ -160,8 +162,6 @@
 			
 			.drag('end', function (ev, dd) {
 				log('[dragend]', 2);
-
-				$(this).css('opacity', 1);
 
 				sortableObject.removeClass(config.ddParentElementClassName);
 				sortableObject.find(config.dragElementClass).remove();
