@@ -1,0 +1,15 @@
+ .sortable-drag {
+ 	position: absolute;
+ 	border: 1px solid black;
+ 	background: white;
+ 	z-index: 1000;
+
+ 	-moz-box-shadow: rgba(0, 0, 0, 0.2) 0 5px 6px 0;
+	-webkit-box-shadow: rgba(0, 0, 0, 0.2) 0 5px 6px 0;
+	-o-box-shadow: rgba(0, 0, 0, 0.2) 0 5px 6px 0;
+	box-shadow: rgba(0, 0, 0, 0.2) 0 5px 6px 0;
+ }
+
+ .sortable-drop {
+ 	opacity: 0.25;
+ }

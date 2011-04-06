@@ -6,11 +6,11 @@
 	var offsetTop = $(this).offset().top;
 
 	var sortComplete = function () {
-		$$.trigger("sort:complete");
+		$$.trigger('sort:complete');
 	};
 
 	var log = function (msg, min_level) {
-		if (config.debugLevel > min_level) {
+		if (config.debugLevel >= min_level) {
 			console.log('[jquery.sort.js] ' + msg);
 		}
 	};
@@ -30,6 +30,10 @@
 		constrain				: false,
 		constrainMarginTop		: 0,
 		constrainMarginBottom	: 0,
+
+		ddParentElementClass	: '.sortable-active',
+		dragElementClass		: '.sortable-drag',
+		dropElementClass		: '.sortable-drop',
 		
 		//callbacks
 		moveComplete			: sortComplete
@@ -45,29 +49,39 @@
 
 	//add elements with constraint margin heights, so as to measure them with the proper applied style
 	//this lets us accept em's, for instance, instead of requiring px
-	var cmt_el = $('<div style="position:absolute; height:' + config.constrainMarginTop + '"/>');
-	$(sortableObject).prepend(cmt_el);
-	$.extend(config, {_cmt: cmt_el.height()});
-	cmt_el.remove();
+	if (config.constrain) {
+		if (config.constrainMarginTop != 0) {
+			var cmt_el = $('<div style="position:absolute; height:' + config.constrainMarginTop + '"/>');
+			$(sortableObject).prepend(cmt_el);
+			$.extend(config, {_cmt: cmt_el.height()});
+			cmt_el.remove();
+		}
 
-	var cmb_el = $('<div style="position:absolute; height:' + config.constrainMarginBottom + ';"/>');
-	$(sortableObject).append(cmb_el);
-	$.extend(config, {_cmb: cmb_el.height()});
-	cmb_el.remove();
+		if (config.constrainMarginBottom != 0) {
+			var cmb_el = $('<div style="position:absolute; height:' + config.constrainMarginBottom + ';"/>');
+			$(sortableObject).append(cmb_el);
+			$.extend(config, {_cmb: cmb_el.height()});
+			cmb_el.remove();
+		}
+
+		log('[constraint margins] top:' + config._cmt + '; bottom:' + config._cmb, 1);
+	}
 
 
-	log('[constraint margins] top:' + config._cmt + '; bottom:' + config._cmb, 1);
+	$.extend(config, {ddParentElementClassName: config.ddParentElementClass.replace(/^\./,'')});
+	$.extend(config, {dragElementClassName: config.dragElementClass.replace(/^\./,'')});
+	$.extend(config, {dropElementClassName: config.dropElementClass.replace(/^\./,'')});
 
-	
+
 	//Requires sortable object to have a unique id; add one if not present- made unique by referencing object y position
-	if(!sortableObject.attr("id")) {
-		objId = "sortable" + offsetTop;
-		objId = objId.split(".")[0];
-		sortableObject.attr("id", objId);
+	if(!sortableObject.attr('id')) {
+		objId = 'sortable' + offsetTop;
+		objId = objId.split('.')[0];
+		sortableObject.attr('id', objId);
 	}
 	
 	//build drop zone limiter for proper scoping
-	var sortScope = "#" + sortableObject.attr("id") + " > " + config.sortElement;
+	var sortScope = '#' + sortableObject.attr('id') + ' > ' + config.sortElement;
 	
 	//since we're using an absolutely position proxy during dragging, we'll need the parent to have a declared position
 	sortElement = $(this).find(config.sortElement);
@@ -85,17 +99,16 @@
 					return false;
 				}
 
-				sortableObject.addClass('sorting');
+				sortableObject.addClass(config.ddParentElementClassName);
 
 				//locate and name nested scroll-y parent in the dom, if present
 				scrollParent = $(this).parents().filter(config.scrollParentClass)[0];
 				
 				//copy the dragged item so you'll see it as you drag. Make it semi-translucent
-				//$(this).clone().addClass('active').css({opacity: 0.8, position: "absolute"}).insertAfter(this);
-				$(this).clone().addClass('active').css({'position': 'absolute', 'border': '1px solid black', 'background': 'white', 'z-order': 100}).insertAfter(this);
+				$(this).clone().addClass(config.dragElementClassName).css({'position': 'absolute'}).insertAfter(this);
 
 				//hide the currently dragged item
-				$(this).addClass('active-drag-item').css('opacity', 0.05);
+				$(this).addClass(config.dropElementClassName);
 
 			})
 			.drag(function (ev, dd) {
@@ -122,13 +135,13 @@
 
 
 				//move the cloned element along with the mouse. Not tested across all browsers yet...
-				var projected_top = (dd.offsetY - offsetTop) - (config.dragElementCenter ? ($('.active').height()/2) : 0);
+				var projected_top = (dd.offsetY - offsetTop) - (config.dragElementCenter ? ($(config.dragElementClass).height()/2) : 0);
 
-				var constraint_top = config._cmt; //offsetTop + $('.active').height();
-				var constraint_bottom = $(sortableObject).height() - config._cmb; //offsetTop + $(sortableObject).height() - $('.active').height();
+				var constraint_top = (config._cmt || 0);
+				var constraint_bottom = $(sortableObject).height() - (config._cmb || 0);
 			
-				if (!config.constrain || (projected_top >= constraint_top && (projected_top + $('.active').height()) <= constraint_bottom)) {
-					$('.active').css({top: projected_top});
+				if (!config.constrain || (projected_top >= constraint_top && (projected_top + $(config.dragElementClass).height()) <= constraint_bottom)) {
+					$(config.dragElementClass).css({top: projected_top});
 				}
 
 				log('[drag] projected_top:'+projected_top+'; constraint_top:'+constraint_top+'; constraint_bottom:'+constraint_bottom, 3);
@@ -150,9 +163,9 @@
 
 				$(this).css('opacity', 1);
 
-				sortableObject.removeClass('sorting');
-				sortableObject.find('.active').remove();
-				$(this).removeClass('active-drag-item');
+				sortableObject.removeClass(config.ddParentElementClassName);
+				sortableObject.find(config.dragElementClass).remove();
+				$(this).removeClass(config.dropElementClassName);
 
 				config.moveComplete();
 			})
