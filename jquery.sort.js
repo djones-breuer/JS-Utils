@@ -3,7 +3,12 @@
 
 	var scrollParent;
 	var sortableObject = $(this);
-	var offsetTop = $(this).offset().top;
+
+	if (sortableObject.length === 0) {
+		return;
+	}
+
+	var offsetTop = sortableObject.offset().top;
 
 	var sortComplete = function () {
 		$$.trigger('sort:complete');
